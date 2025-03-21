@@ -138,10 +138,5 @@ jobs:
               PromotedBy=${{ github.actor }} \
               SourceArtifact=${{ needs.get-artifact.outputs.artifact_name }}
               
-          # In a real-world scenario, you might also want to:
-          # 1. Record the promotion in a database
-          # 2. Create a release note
-          # 3. Send notifications
-          # 4. Create a JIRA ticket or work item
           
           echo "Promotion completed: ${{ github.event.inputs.function_app }} from ${{ github.event.inputs.source_environment }} to ${{ github.event.inputs.target_environment }}"
