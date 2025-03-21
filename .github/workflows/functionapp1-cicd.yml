@@ -7,7 +7,7 @@ on:
       - develop
     paths:
       - 'functionapp1/**'
-      - '.github/workflows/functionapp1-cicd.yml'
+    #   - '.github/workflows/functionapp1-cicd.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -98,7 +98,7 @@ jobs:
         id: deploy-function
         uses: azure/functions-action@v1
         with:
-          app-name: functionapp1-dev # Replace with your dev function app name
+          app-name: functionapp1-dev-jp # Replace with your dev function app 1 Azure name
           package: functionapp1.zip
           # Using service principal authentication instead of publish profile
 
@@ -117,7 +117,7 @@ jobs:
       environment: 'qa'
       run_id: ${{ github.run_id }}
     secrets: inherit
-
+  
   deploy-qa:
     needs: [build, store-qa-artifact]
     if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
@@ -142,7 +142,7 @@ jobs:
         id: deploy-function
         uses: azure/functions-action@v1
         with:
-          app-name: functionapp1-qa # Replace with your qa function app name
+          app-name: functionapp1-qa-jp # Replace with your qa function app 1 Azure name
           package: functionapp1.zip
           # Using service principal authentication instead of publish profile
 

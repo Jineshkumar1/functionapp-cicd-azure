@@ -7,7 +7,7 @@ on:
       - develop
     paths:
       - 'functionapp2/**'
-      - '.github/workflows/functionapp2-cicd.yml'
+    #   - '.github/workflows/functionapp2-cicd.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -98,7 +98,7 @@ jobs:
         id: deploy-function
         uses: azure/functions-action@v1
         with:
-          app-name: functionapp2-dev # Replace with your dev function app name
+          app-name: functionapp2-dev-jp # Replace with your dev function app 2 name
           package: functionapp2.zip
           # Using service principal authentication instead of publish profile
 
@@ -142,7 +142,7 @@ jobs:
         id: deploy-function
         uses: azure/functions-action@v1
         with:
-          app-name: functionapp2-qa # Replace with your qa function app name
+          app-name: functionapp2-qa-jp # Replace with your qa function app 2 Azure name
           package: functionapp2.zip
           # Using service principal authentication instead of publish profile
 
