@@ -25,12 +25,36 @@ on:
           - qa
           - prod
       artifact_id:
-        description: 'Specific artifact ID to promote (leave empty for latest)'
+        description: 'Specific artifact ID to promote (format: {timestamp}-{run_id} or leave empty for latest)'
         required: false
         type: string
 
 jobs:
+  list-available-artifacts:
+    # This job will run first to list available artifacts for reference
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: List Available Artifacts
+        run: |
+          echo "Available artifacts for ${{ github.event.inputs.function_app }} in ${{ github.event.inputs.source_environment }}:"
+          echo "--------------------------------------------------------------"
+          az storage blob list --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} \
+            --container-name function-artifacts \
+            --prefix "${{ github.event.inputs.function_app }}-${{ github.event.inputs.source_environment }}" \
+            --auth-mode login \
+            --query "[].{Name:name, LastModified:properties.lastModified}" \
+            --output table
+          echo "--------------------------------------------------------------"
+          echo "To use a specific artifact, use the timestamp-runid portion from the artifact name"
+          echo "For example, from 'functionapp1-dev-20230421123456-12345.zip', use '20230421123456-12345'"
+
   get-artifact:
+    needs: list-available-artifacts
     runs-on: ubuntu-latest
     outputs:
       artifact_name: ${{ steps.set-artifact.outputs.artifact_name }}
