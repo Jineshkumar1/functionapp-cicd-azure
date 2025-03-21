@@ -73,7 +73,16 @@ jobs:
       environment: 'dev'
       run_id: ${{ github.run_id }}
     secrets: inherit
-      
+  
+# deploy-dev job will only run if:
+# The build job completed successfully (needs.build.outputs.build_status == 'success')
+# This is important because you don't want to deploy a failed build
+# AND
+# Either:
+# The workflow was triggered by a push to the develop branch (github.ref == 'refs/heads/develop')
+# OR 
+# the workflow was manually triggered (workflow_dispatch) and the user specifically selected "dev" as the environment (github.event.inputs.environment == 'dev') 
+
   deploy-dev:
     needs: [build, store-dev-artifact]
     if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
@@ -116,6 +125,16 @@ jobs:
       environment: 'qa'
       run_id: ${{ github.run_id }}
     secrets: inherit
+
+
+# deploy-qa job will only run if:
+# The build job completed successfully (needs.build.outputs.build_status == 'success')
+# This ensures you're only deploying builds that passed all compilation and tests
+# AND
+# Either:
+# The workflow was triggered by a push to the main branch (github.ref == 'refs/heads/main')
+# OR 
+# the workflow was manually triggered (workflow_dispatch) and the user specifically selected "qa" as the environment (github.event.inputs.environment == 'qa')
 
   deploy-qa:
     needs: [build, store-qa-artifact]
