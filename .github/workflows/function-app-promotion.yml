@@ -119,7 +119,17 @@ jobs:
         run: |
           # Tag the function app with promotion information
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          RESOURCE_GROUP="MyResourceGroup" # Replace with your resource group name
+          
+          # Set resource group based on target environment
+          if [ "${{ github.event.inputs.target_environment }}" == "qa" ]; then
+            RESOURCE_GROUP="qa-jp-functionapp-rg" # Replace with your QA resource group name
+          elif [ "${{ github.event.inputs.target_environment }}" == "prod" ]; then
+            RESOURCE_GROUP="ProdResourceGroup" # Replace with your Prod resource group name
+          else
+            RESOURCE_GROUP="DevResourceGroup" # Replace with your Dev resource group name
+          fi
+          
+          echo "Using resource group: $RESOURCE_GROUP for ${{ github.event.inputs.target_environment }} environment"
           
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/${{ github.event.inputs.function_app }}-${{ github.event.inputs.target_environment }}-jp \
             --tags \
