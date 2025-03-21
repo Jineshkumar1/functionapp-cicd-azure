@@ -1,0 +1,66 @@
+name: Artifact Management and Storage
+
+on:
+  workflow_call:
+    inputs:
+      function_app_name:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+    outputs:
+      artifact_uri:
+        description: "URI of the stored artifact"
+        value: ${{ jobs.store-artifact.outputs.artifact_uri }}
+
+jobs:
+  store-artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_uri: ${{ steps.upload-artifact.outputs.artifact_uri }}
+    steps:
+      - name: Download workflow artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.function_app_name }}-${{ inputs.run_id }}
+          path: ./
+      
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Upload to Azure Storage
+        id: upload-artifact
+        run: |
+          # Create storage container if it doesn't exist
+          az storage container create --name function-artifacts --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --auth-mode login --public-access off
+          
+          # Upload artifact with environment and timestamp in name
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          ARTIFACT_NAME="${{ inputs.function_app_name }}-${{ inputs.environment }}-${TIMESTAMP}-${{ inputs.run_id }}.zip"
+          
+          # Upload file
+          az storage blob upload --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --name "$ARTIFACT_NAME" --file "${{ inputs.function_app_name }}.zip" --auth-mode login
+          
+          # Generate SAS token for the blob (optional, for access control)
+          END_DATE=$(date -u -d "30 days" '+%Y-%m-%dT%H:%MZ')
+          ARTIFACT_URI=$(az storage blob generate-sas --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --name "$ARTIFACT_NAME" --permissions r --expiry $END_DATE --https-only --full-uri --auth-mode login -o tsv)
+          
+          # Set output for use in other jobs
+          echo "artifact_uri=$ARTIFACT_URI" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          
+      - name: Record artifact metadata
+        run: |
+          echo "Stored artifact: ${{ steps.upload-artifact.outputs.artifact_name }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Build ID: ${{ inputs.run_id }}"
+          echo "Storage URI: ${{ steps.upload-artifact.outputs.artifact_uri }}"
+          
+          # In a real-world scenario, you might want to store this metadata in a database or configuration system
+          # For example, using Azure Table Storage to track deployments

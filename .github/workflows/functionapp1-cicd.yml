@@ -1,0 +1,153 @@
+name: FunctionApp1 CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'functionapp1/**'
+      - '.github/workflows/functionapp1-cicd.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+
+env:
+  AZURE_FUNCTIONAPP_JAVA_VERSION: '21'
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'functionapp1'
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'temurin'
+  FUNCTION_APP_NAME: 'functionapp1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      build_status: ${{ job.status }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build with Maven
+        run: |
+          cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          mvn clean package
+
+      - name: Run Tests
+        run: |
+          cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          mvn test
+
+      - name: Create function app package
+        run: |
+          cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/target/azure-functions/javafunctionapp-1738723791781
+          zip -r ../../../functionapp1.zip *
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: functionapp1-${{ github.run_id }}
+          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/functionapp1.zip
+          retention-days: 30
+      
+  store-dev-artifact:
+    needs: build
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
+    uses: ./.github/workflows/artifact-management.yml
+    with:
+      function_app_name: ${{ env.FUNCTION_APP_NAME }}
+      environment: 'dev'
+      run_id: ${{ github.run_id }}
+    secrets: inherit
+      
+  deploy-dev:
+    needs: [build, store-dev-artifact]
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
+    runs-on: ubuntu-latest
+    environment: 
+      name: dev
+      url: ${{ steps.deploy-function.outputs.app-url }}
+    
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: functionapp1-${{ github.run_id }}
+          path: .
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Deploy to Azure Function App - DEV
+        id: deploy-function
+        uses: azure/functions-action@v1
+        with:
+          app-name: functionapp1-dev # Replace with your dev function app name
+          package: functionapp1.zip
+          # Using service principal authentication instead of publish profile
+
+      - name: Add deployment tag to Function App
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          az functionapp deployment list-publishing-profiles --name functionapp1-dev --resource-group MyResourceGroup --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --xml > /dev/null
+          az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/functionapp1-dev --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
+
+  store-qa-artifact:
+    needs: build
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
+    uses: ./.github/workflows/artifact-management.yml
+    with:
+      function_app_name: ${{ env.FUNCTION_APP_NAME }}
+      environment: 'qa'
+      run_id: ${{ github.run_id }}
+    secrets: inherit
+
+  deploy-qa:
+    needs: [build, store-qa-artifact]
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
+    runs-on: ubuntu-latest
+    environment: 
+      name: qa
+      url: ${{ steps.deploy-function.outputs.app-url }}
+    
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: functionapp1-${{ github.run_id }}
+          path: .
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Deploy to Azure Function App - QA
+        id: deploy-function
+        uses: azure/functions-action@v1
+        with:
+          app-name: functionapp1-qa # Replace with your qa function app name
+          package: functionapp1.zip
+          # Using service principal authentication instead of publish profile
+
+      - name: Add deployment tag to Function App
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          az functionapp deployment list-publishing-profiles --name functionapp1-qa --resource-group MyResourceGroup --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --xml > /dev/null
+          az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/functionapp1-qa --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
