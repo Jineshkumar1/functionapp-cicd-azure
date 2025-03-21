@@ -48,7 +48,7 @@ jobs:
             echo "Looking for latest ${{ github.event.inputs.function_app }} artifact in ${{ github.event.inputs.source_environment }}..."
             
             # List blobs and sort by date (newest first)
-            LATEST_ARTIFACT=$(az storage blob list --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --prefix "${{ github.event.inputs.function_app }}-${{ github.event.inputs.source_environment }}" --query "[].name" -o tsv | sort -r | head -n 1)
+            LATEST_ARTIFACT=$(az storage blob list --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --prefix "${{ github.event.inputs.function_app }}-${{ github.event.inputs.source_environment }}" --auth-mode login --query "[].name" -o tsv | sort -r | head -n 1)
             
             if [ -z "$LATEST_ARTIFACT" ]; then
               echo "No artifacts found for ${{ github.event.inputs.function_app }} in ${{ github.event.inputs.source_environment }}"
@@ -80,6 +80,7 @@ jobs:
       - name: Download artifact from storage
         run: |
           echo "Downloading artifact: ${{ needs.get-artifact.outputs.artifact_name }}"
+          # Download using auth-mode login (requires storage blob data contributor role)
           az storage blob download --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --name "${{ needs.get-artifact.outputs.artifact_name }}" --file "./artifacts/${{ github.event.inputs.function_app }}.zip" --auth-mode login
           
       - name: Deploy Function App

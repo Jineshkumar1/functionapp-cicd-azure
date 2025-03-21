@@ -47,9 +47,8 @@ jobs:
           # Upload file
           az storage blob upload --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --name "$ARTIFACT_NAME" --file "${{ inputs.function_app_name }}.zip" --auth-mode login
           
-          # Generate SAS token for the blob (optional, for access control)
-          END_DATE=$(date -u -d "30 days" '+%Y-%m-%dT%H:%MZ')
-          ARTIFACT_URI=$(az storage blob generate-sas --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --name "$ARTIFACT_NAME" --permissions r --expiry $END_DATE --https-only --full-uri --auth-mode login -o tsv)
+          # Instead of generating SAS token with login auth-mode, just store the blob URL
+          ARTIFACT_URI="https://${{ secrets.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/function-artifacts/$ARTIFACT_NAME"
           
           # Set output for use in other jobs
           echo "artifact_uri=$ARTIFACT_URI" >> $GITHUB_OUTPUT
