@@ -1,0 +1,48 @@
+name: Function App 1 - Dev Deployment
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'functionapp1/**'
+      - '.github/workflows/functionapp1-dev.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: 'javafunctionapp-1738723791781'  # Replace with your Function App name
+  JAVA_VERSION: '21'
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'functionapp1'
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    environment: dev
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'microsoft'
+        cache: maven
+
+    - name: Build with Maven
+      run: |
+        cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        mvn clean package -DskipTests
+        
+    - name: Run Tests
+      run: |
+        cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        mvn test
+
+    - name: Deploy to Azure Function App - DEV
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/target/javafunctionapp-1.0-SNAPSHOT.jar
+        publish-profile: ${{ secrets.FUNCTIONAPP1_DEV_PUBLISH_PROFILE }}

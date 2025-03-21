@@ -1,0 +1,71 @@
+name: Promote Functions Between Environments
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_environment:
+        description: 'Source Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - test
+      target_environment:
+        description: 'Target Environment'
+        required: true
+        type: choice
+        options:
+          - qa
+          - test
+          - preprod
+      function_app:
+        description: 'Function App to Promote'
+        required: true
+        type: choice
+        options:
+          - functionapp1
+          - functionapp2
+
+jobs:
+  promote:
+    runs-on: windows-latest
+    environment: ${{ github.event.inputs.target_environment }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'microsoft'
+        cache: maven
+
+    - name: Build with Maven
+      run: |
+        cd ${{ github.event.inputs.function_app }}
+        mvn clean package -DskipTests
+
+    - name: Run Tests
+      run: |
+        cd ${{ github.event.inputs.function_app }}
+        mvn test
+
+    - name: Deploy Function App 1 to Target Environment
+      if: github.event.inputs.function_app == 'functionapp1'
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets[format('FUNCTIONAPP1_{0}_NAME', github.event.inputs.target_environment)] }}
+        package: functionapp1/target/javafunctionapp-1.0-SNAPSHOT.jar
+        publish-profile: ${{ secrets[format('FUNCTIONAPP1_{0}_PUBLISH_PROFILE', github.event.inputs.target_environment)] }}
+
+    - name: Deploy Function App 2 to Target Environment
+      if: github.event.inputs.function_app == 'functionapp2'
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ secrets[format('FUNCTIONAPP2_{0}_NAME', github.event.inputs.target_environment)] }}
+        package: functionapp2/target/javafunctionapp-1.0-SNAPSHOT.jar
+        publish-profile: ${{ secrets[format('FUNCTIONAPP2_{0}_PUBLISH_PROFILE', github.event.inputs.target_environment)] }}
