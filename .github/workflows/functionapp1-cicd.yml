@@ -102,11 +102,10 @@ jobs:
           package: functionapp1.zip
           # Using service principal authentication instead of publish profile
 
-      - name: Add deployment tag to Function App
+      - name: Add deployment tag to Function App Dev
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          az functionapp deployment list-publishing-profiles --name functionapp1-dev --resource-group MyResourceGroup --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --xml > /dev/null
-          az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/functionapp1-dev --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
+          az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/functionapp1-dev-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
 
   store-qa-artifact:
     needs: build
@@ -146,8 +145,10 @@ jobs:
           package: functionapp1.zip
           # Using service principal authentication instead of publish profile
 
-      - name: Add deployment tag to Function App
+      - name: Add deployment tag to Function App QA
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          az functionapp deployment list-publishing-profiles --name functionapp1-qa --resource-group MyResourceGroup --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --xml > /dev/null
-          az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/functionapp1-qa --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
+          az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.Web/sites/functionapp1-qa-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
+          
+
+        # az functionapp deployment list-publishing-profiles --name functionapp1-qa --resource-group MyResourceGroup --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --xml > /dev/null
