@@ -94,6 +94,7 @@ jobs:
 # the workflow was manually triggered (workflow_dispatch) and the user specifically selected "dev" as the environment (github.event.inputs.environment == 'dev') 
 
   deploy-dev:
+    name: Deploy to DEV functionapp2
     needs: [build, store-dev-artifact]
     if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
     runs-on: ubuntu-latest
