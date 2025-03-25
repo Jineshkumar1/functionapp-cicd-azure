@@ -95,6 +95,7 @@ jobs:
 # the workflow was manually triggered (workflow_dispatch) and the user specifically selected "dev" as the environment (github.event.inputs.environment == 'dev') 
       
   deploy-dev:
+    name: Deploy to DEV functionapp2
     needs: [build, store-dev-artifact]
     if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
     runs-on: ubuntu-latest
@@ -122,7 +123,7 @@ jobs:
           package: functionapp2.zip
           # Using service principal authentication instead of publish profile
 
-      - name: Add deployment tag to Function App
+      - name: Add deployment tag to Function App Dev
         run: |
           TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/dev-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp2-dev-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
@@ -175,7 +176,7 @@ jobs:
           package: functionapp2.zip
           # Using service principal authentication instead of publish profile
 
-      - name: Add deployment tag to Function App
+      - name: Add deployment tag to Function App QA
         run: |
           TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/qa-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp2-qa-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}

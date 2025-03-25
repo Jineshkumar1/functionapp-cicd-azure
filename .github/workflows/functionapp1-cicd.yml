@@ -52,7 +52,6 @@ jobs:
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           mvn com.github.spotbugs:spotbugs-maven-plugin:check
 
-
       # Regular build steps continue here
       - name: Build with Maven
         run: |
@@ -181,4 +180,3 @@ jobs:
         run: |
           TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/qa-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp1-qa-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
-
