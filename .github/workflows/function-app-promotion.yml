@@ -73,8 +73,14 @@ jobs:
           if [ -z "${{ github.event.inputs.artifact_id }}" ]; then
             echo "Looking for latest ${{ github.event.inputs.function_app }} artifact in ${{ github.event.inputs.source_environment }}..."
             
-            # List blobs and sort by date (newest first)
-            LATEST_ARTIFACT=$(az storage blob list --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --container-name function-artifacts --prefix "${{ github.event.inputs.function_app }}-${{ github.event.inputs.source_environment }}" --auth-mode login --query "[].name" -o tsv | sort -r | head -n 1)
+            # Use proper sorting by lastModified time to get the newest artifact
+            LATEST_ARTIFACT=$(az storage blob list \
+              --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} \
+              --container-name function-artifacts \
+              --prefix "${{ github.event.inputs.function_app }}-${{ github.event.inputs.source_environment }}" \
+              --auth-mode login \
+              --query "sort_by([], &properties.lastModified)[-1].name" \
+              -o tsv)
             
             if [ -z "$LATEST_ARTIFACT" ]; then
               echo "No artifacts found for ${{ github.event.inputs.function_app }} in ${{ github.event.inputs.source_environment }}"
@@ -142,4 +148,4 @@ jobs:
               SourceArtifact=${{ needs.get-artifact.outputs.artifact_name }}
               
           
-          echo "Promotion completed: ${{ github.event.inputs.function_app }} from ${{ github.event.inputs.source_environment }} to ${{ github.event.inputs.target_environment }}"
+          echo "Promotion completed: ${{ github.event.inputs.function_app }} from ${{ github.event.inputs.source_environment }} to ${{ github.event.inputs.target_environment }}
