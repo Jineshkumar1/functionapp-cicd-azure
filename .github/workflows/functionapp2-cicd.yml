@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - qa  # Added qa branch to trigger workflow
     paths:
       - 'functionapp2/**'
       - '.github/workflows/functionapp2-cicd.yml'
@@ -83,7 +84,7 @@ jobs:
       environment: 'dev'
       run_id: ${{ github.run_id }}
     secrets: inherit
-  
+
 # deploy-dev job will only run if:
 # The build job completed successfully (needs.build.outputs.build_status == 'success')
 # This is important because you don't want to deploy a failed build
@@ -92,7 +93,7 @@ jobs:
 # The workflow was triggered by a push to the develop branch (github.ref == 'refs/heads/develop')
 # OR 
 # the workflow was manually triggered (workflow_dispatch) and the user specifically selected "dev" as the environment (github.event.inputs.environment == 'dev') 
-
+      
   deploy-dev:
     needs: [build, store-dev-artifact]
     if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
@@ -123,7 +124,7 @@ jobs:
 
       - name: Add deployment tag to Function App
         run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/dev-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp2-dev-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
 
   store-qa-artifact:
@@ -142,7 +143,7 @@ jobs:
 # This ensures you're only deploying builds that passed all compilation and tests
 # AND
 # Either:
-# The workflow was triggered by a push to the main branch (github.ref == 'refs/heads/main')
+# The workflow was triggered by a push to the qa branch (github.ref == 'refs/heads/qa')
 # OR 
 # the workflow was manually triggered (workflow_dispatch) and the user specifically selected "qa" as the environment (github.event.inputs.environment == 'qa')
 
@@ -176,5 +177,5 @@ jobs:
 
       - name: Add deployment tag to Function App
         run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/qa-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp2-qa-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
