@@ -50,9 +50,9 @@ jobs:
             --auth-mode login \
             --query "[].{Name:name, LastModified:properties.lastModified}" \
             --output table
-          echo "--------------------------------------------------------------"
+          echo "----------------------date +"%Y-%m-%d %H:%M:%S"----------------------------------------"
           echo "To use a specific artifact, use the timestamp-runid portion from the artifact name"
-          echo "For example, from 'functionapp1-dev-20230421123456-12345.zip', use '20230421123456-12345'"
+          echo "For example, from 'functionapp1-dev-2023-04-21123456-12345.zip', use '2023-04-21123456-12345'"
 
   get-artifact:
     name: Fetch ${{ github.event.inputs.function_app }} artifact from ${{ github.event.inputs.source_environment }}

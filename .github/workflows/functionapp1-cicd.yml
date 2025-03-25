@@ -125,7 +125,7 @@ jobs:
 
       - name: Add deployment tag to Function App Dev
         run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/dev-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp1-dev-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
 
   store-qa-artifact:
@@ -178,6 +178,6 @@ jobs:
 
       - name: Add deployment tag to Function App QA
         run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/qa-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp1-qa-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
 
