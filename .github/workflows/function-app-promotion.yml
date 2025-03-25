@@ -127,7 +127,7 @@ jobs:
       - name: Record promotion in Azure
         run: |
           # Tag the function app with promotion information
-            TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           
           # Set resource group based on target environment
           if [ "${{ github.event.inputs.target_environment }}" == "qa" ]; then
@@ -140,12 +140,17 @@ jobs:
           
           echo "Using resource group: $RESOURCE_GROUP for ${{ github.event.inputs.target_environment }} environment"
           
+          # Clean the artifact name to ensure it's a valid tag value
+          # Azure tags can't have characters like ':' or spaces
+          ARTIFACT_NAME="${{ needs.get-artifact.outputs.artifact_name }}"
+          ARTIFACT_TAG_VALUE=$(echo "$ARTIFACT_NAME" | sed 's/[: ]/-/g')
+          
+          # Create the tags using separate --tags parameter for each tag to ensure proper formatting
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/${{ github.event.inputs.function_app }}-${{ github.event.inputs.target_environment }}-jp \
             --tags \
-              PromotedFrom=${{ github.event.inputs.source_environment }} \
-              PromotionDate=$TIMESTAMP \
-              PromotedBy=${{ github.actor }} \
-              SourceArtifact=${{ needs.get-artifact.outputs.artifact_name }}
+              "PromotedFrom=${{ github.event.inputs.source_environment }}" \
+              "PromotionDate=$TIMESTAMP" \
+              "PromotedBy=${{ github.actor }}" \
+              "SourceArtifact=$ARTIFACT_TAG_VALUE"
               
-          
-          echo "Promotion completed: ${{ github.event.inputs.function_app }} from ${{ github.event.inputs.source_environment }} to ${{ github.event.inputs.target_environment }}
+          echo "Promotion completed: ${{ github.event.inputs.function_app }} from ${{ github.event.inputs.source_environment }} to ${{ github.event.inputs.target_environment }}"
