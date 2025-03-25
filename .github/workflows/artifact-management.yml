@@ -41,7 +41,7 @@ jobs:
           az storage container create --name function-artifacts --account-name ${{ secrets.STORAGE_ACCOUNT_NAME }} --auth-mode login --public-access off
           
           # Upload artifact with environment and timestamp in name
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           ARTIFACT_NAME="${{ inputs.function_app_name }}-${{ inputs.environment }}-${TIMESTAMP}-${{ inputs.run_id }}.zip"
           
           # Upload file
