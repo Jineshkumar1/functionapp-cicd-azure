@@ -1,4 +1,4 @@
-name: Function App Promotion
+name: Function App Promotion - ${{ github.event.inputs.function_app || 'Select Function App' }}
 
 on:
   workflow_dispatch:
@@ -31,6 +31,7 @@ on:
 
 jobs:
   list-available-artifacts:
+    name: List ${{ github.event.inputs.function_app }} artifacts in ${{ github.event.inputs.source_environment }}
     # This job will run first to list available artifacts for reference
     runs-on: ubuntu-latest
     steps:
@@ -54,6 +55,7 @@ jobs:
           echo "For example, from 'functionapp1-dev-20230421123456-12345.zip', use '20230421123456-12345'"
 
   get-artifact:
+    name: Fetch ${{ github.event.inputs.function_app }} artifact from ${{ github.event.inputs.source_environment }}
     needs: list-available-artifacts
     runs-on: ubuntu-latest
     outputs:
@@ -89,6 +91,7 @@ jobs:
           fi
 
   promote:
+    name: Promote ${{ github.event.inputs.function_app }} from ${{ github.event.inputs.source_environment }} to ${{ github.event.inputs.target_environment }}
     needs: get-artifact
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.target_environment }}
@@ -118,7 +121,7 @@ jobs:
       - name: Record promotion in Azure
         run: |
           # Tag the function app with promotion information
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+            TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
           
           # Set resource group based on target environment
           if [ "${{ github.event.inputs.target_environment }}" == "qa" ]; then
