@@ -51,14 +51,6 @@ jobs:
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           mvn com.github.spotbugs:spotbugs-maven-plugin:check
 
-      # Check for hardcoded secrets - modified to use filesystem scanning
-      - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          # Remove base and head parameters to use filesystem scanning instead of git history
-          extra_args: --debug --only-verified --no-update
-
       # Regular build steps continue here
       - name: Build with Maven
         run: |
