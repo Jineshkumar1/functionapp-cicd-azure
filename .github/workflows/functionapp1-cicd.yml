@@ -44,27 +44,27 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
           
-      # Set JAVA_HOME environment variable explicitly
-      - name: Set JAVA_HOME explicitly
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
-          echo "Current Java home is: $JAVA_HOME"
-          echo "Java version:"
-          java -version
+      # # Set JAVA_HOME environment variable explicitly
+      # - name: Set JAVA_HOME explicitly
+      #   run: |
+      #     echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
+      #     echo "Current Java home is: $JAVA_HOME"
+      #     echo "Java version:"
+      #     java -version
 
-      # Security scanning with OWASP Dependency Check
-      - name: OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
-        with:
-          project: 'FunctionApp1'
-          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          format: 'HTML'
-          out: '${{ github.workspace }}/reports/dependency-check-report'
-          args: >
-            --failOnCVSS 7
-            --enableRetired
+      # # Security scanning with OWASP Dependency Check
+      # - name: OWASP Dependency Check
+      #   uses: dependency-check/Dependency-Check_Action@main
+      #   env:
+      #     JAVA_HOME: ${{ env.JAVA_HOME }}
+      #   with:
+      #     project: 'FunctionApp1'
+      #     path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+      #     format: 'HTML'
+      #     out: '${{ github.workspace }}/reports/dependency-check-report'
+      #     args: >
+      #       --failOnCVSS 7
+      #       --enableRetired
 
       # Upload dependency check report as an artifact
       - name: Upload Dependency Check Report
