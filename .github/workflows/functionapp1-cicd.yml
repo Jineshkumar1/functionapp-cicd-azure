@@ -66,27 +66,27 @@ jobs:
       #       --failOnCVSS 7
       #       --enableRetired
 
-      # Upload dependency check report as an artifact
-      - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v4
-        if: always()  # Run even if the previous step fails
-        with:
-          name: dependency-check-report
-          path: ${{ github.workspace }}/reports/dependency-check-report
-          retention-days: 7
+      # # Upload dependency check report as an artifact
+      # - name: Upload Dependency Check Report
+      #   uses: actions/upload-artifact@v4
+      #   if: always()  # Run even if the previous step fails
+      #   with:
+      #     name: dependency-check-report
+      #     path: ${{ github.workspace }}/reports/dependency-check-report
+      #     retention-days: 7
 
-      # SonarCloud scanning 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Provided automatically by GitHub
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # You need to set this in your repo settings
-        with:
-          projectBaseDir: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          args: >
-            -Dsonar.projectKey=functionapp1
-            -Dsonar.organization=your-organization
-            -Dsonar.java.binaries=target/classes
+      # # SonarCloud scanning 
+      # - name: SonarCloud Scan
+      #   uses: SonarSource/sonarcloud-github-action@master
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Provided automatically by GitHub
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # You need to set this in your repo settings
+      #   with:
+      #     projectBaseDir: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+      #     args: >
+      #       -Dsonar.projectKey=functionapp1
+      #       -Dsonar.organization=your-organization
+      #       -Dsonar.java.binaries=target/classes
 
       # Run SpotBugs static code analysis
       - name: Run SpotBugs Analysis
