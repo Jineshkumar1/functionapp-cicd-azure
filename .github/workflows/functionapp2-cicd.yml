@@ -95,7 +95,7 @@ jobs:
 
   deploy-dev:
     needs: [build, store-dev-artifact]
-    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
     runs-on: ubuntu-latest
     environment: 
       name: dev
@@ -128,7 +128,7 @@ jobs:
 
   store-qa-artifact:
     needs: build
-    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/qa' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
     uses: ./.github/workflows/artifact-management.yml
     with:
       function_app_name: 'functionapp2'
@@ -148,7 +148,7 @@ jobs:
 
   deploy-qa:
     needs: [build, store-qa-artifact]
-    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
+    if: needs.build.outputs.build_status == 'success' && (github.ref == 'refs/heads/qa' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa'))
     runs-on: ubuntu-latest
     environment: 
       name: qa
