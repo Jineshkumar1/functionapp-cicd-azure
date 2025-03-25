@@ -1,4 +1,4 @@
-name: Function App Promotion - ${{ github.event.inputs.function_app || 'Select Function App' }}
+name: Function Apps Promotion
 
 on:
   workflow_dispatch:
