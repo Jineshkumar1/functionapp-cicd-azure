@@ -7,7 +7,7 @@ on:
       - develop
     paths:
       - 'functionapp1/**'
-    #   - '.github/workflows/functionapp1-cicd.yml'
+      - '.github/workflows/functionapp1-cicd.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
 
       - name: Setup Java
         uses: actions/setup-java@v3
@@ -42,6 +44,56 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
+      # Security scanning with OWASP Dependency Check
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'FunctionApp1'
+          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          format: 'HTML'
+          out: '${{ github.workspace }}/reports/dependency-check-report'
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+
+      # Upload dependency check report as an artifact
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        if: always()  # Run even if the previous step fails
+        with:
+          name: dependency-check-report
+          path: ${{ github.workspace }}/reports/dependency-check-report
+          retention-days: 7
+
+      # SonarCloud scanning 
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Provided automatically by GitHub
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # You need to set this in your repo settings
+        with:
+          projectBaseDir: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          args: >
+            -Dsonar.projectKey=functionapp1
+            -Dsonar.organization=your-organization
+            -Dsonar.java.binaries=target/classes
+
+      # Run SpotBugs static code analysis
+      - name: Run SpotBugs Analysis
+        run: |
+          cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          mvn com.github.spotbugs:spotbugs-maven-plugin:check
+
+      # Check for hardcoded secrets
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      # Regular build steps continue here
       - name: Build with Maven
         run: |
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
@@ -96,7 +148,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: functionapp1-${{ github.run_id }}
-          path: .
+          path: ./
 
       - name: Azure Login
         uses: azure/login@v1
@@ -149,7 +201,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: functionapp1-${{ github.run_id }}
-          path: .
+          path: ./
 
       - name: Azure Login
         uses: azure/login@v1
@@ -168,4 +220,4 @@ jobs:
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           az tag create --resource-id /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/qa-jp-functionapp-rg/providers/Microsoft.Web/sites/functionapp1-qa-jp --tags LastDeployment=$TIMESTAMP DeploymentID=${{ github.run_id }} DeployedBy=${{ github.actor }}
-          
+
