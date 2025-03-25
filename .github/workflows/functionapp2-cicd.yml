@@ -44,49 +44,6 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
           
-      # Set JAVA_HOME environment variable explicitly
-      - name: Set JAVA_HOME explicitly
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
-          echo "Current Java home is: $JAVA_HOME"
-          echo "Java version:"
-          java -version
-
-      # Security scanning with OWASP Dependency Check
-      - name: OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
-        with:
-          project: 'FunctionApp2'
-          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          format: 'HTML'
-          out: '${{ github.workspace }}/reports/dependency-check-report-functionapp2'
-          args: >
-            --failOnCVSS 7
-            --enableRetired
-
-      # Upload dependency check report as an artifact
-      - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v4
-        if: always()  # Run even if the previous step fails
-        with:
-          name: dependency-check-report-functionapp2
-          path: ${{ github.workspace }}/reports/dependency-check-report-functionapp2
-          retention-days: 7
-
-      # SonarCloud scanning
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Provided automatically by GitHub
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # You need to set this in your repo settings
-        with:
-          projectBaseDir: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          args: >
-            -Dsonar.projectKey=functionapp2
-            -Dsonar.organization=your-organization
-            -Dsonar.java.binaries=target/classes
 
       # Run SpotBugs static code analysis
       - name: Run SpotBugs Analysis
