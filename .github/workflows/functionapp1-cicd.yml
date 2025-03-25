@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - qa  # Added qa branch to trigger workflow
     paths:
       - 'functionapp1/**'
       - '.github/workflows/functionapp1-cicd.yml'
