@@ -89,7 +89,7 @@ jobs:
 # deploy-dev job will only run if:
 # The build job completed successfully (needs.build.outputs.build_status == 'success')
 # This is important because you don't want to deploy a failed build
-# AND
+# AND  
 # Either:
 # The workflow was triggered by a push to the develop branch (github.ref == 'refs/heads/develop')
 # OR 
